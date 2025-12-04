@@ -1,10 +1,11 @@
 // app/(tabs)/my-bookings.tsx
 
-import { router } from "expo-router";
-import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import React, { memo, useCallback, useState } from "react";
 import {
+  FlatList,
   Image,
-  ScrollView,
+  ListRenderItem,
   StatusBar,
   StyleSheet,
   Text,
@@ -21,10 +22,11 @@ const COLORS = {
   text: "#ffffff",
   textMuted: "#8b92a8",
   statusConfirmed: "#01d28e",
+  statusCancelled: "#ef4444",
 } as const;
 
 // ────────────────────── TYPES & DATA ──────────────────────
-type TabType = "upcoming" | "completed" | "cancelled";
+type TabType = "ongoing" | "upcoming" | "completed" | "cancelled";
 
 interface Booking {
   id: string;
@@ -37,6 +39,7 @@ interface Booking {
 }
 
 const BOOKINGS_DATA: Record<TabType, Booking[]> = {
+  ongoing: [],
   upcoming: [
     {
       id: "1",
@@ -87,10 +90,13 @@ const BOOKINGS_DATA: Record<TabType, Booking[]> = {
 
 // ────────────────────── COMPONENTS ──────────────────────
 const Header = () => {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{ paddingTop: insets.top }}>
+    <View
+      style={{ paddingTop: insets.top, backgroundColor: COLORS.background }}
+    >
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -115,7 +121,7 @@ const TabBar = ({
   onChange: (tab: TabType) => void;
 }) => (
   <View style={styles.tabContainer}>
-    {(["upcoming", "completed", "cancelled"] as const).map((tab) => (
+    {(["ongoing", "upcoming", "completed", "cancelled"] as const).map((tab) => (
       <TouchableOpacity
         key={tab}
         onPress={() => onChange(tab)}
@@ -132,7 +138,7 @@ const TabBar = ({
   </View>
 );
 
-const BookingCard = ({ booking }: { booking: Booking }) => (
+const BookingCard = memo(({ booking }: { booking: Booking }) => (
   <View style={styles.card}>
     <View style={styles.cardContent}>
       <View style={styles.cardLeft}>
@@ -142,7 +148,14 @@ const BookingCard = ({ booking }: { booking: Booking }) => (
             booking.status === "cancelled" && styles.statusCancelled,
           ]}
         >
-          <Text style={styles.statusText}>
+          <Text
+            style={[
+              styles.statusText,
+              booking.status === "cancelled" && {
+                color: COLORS.statusCancelled,
+              },
+            ]}
+          >
             {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
           </Text>
         </View>
@@ -154,10 +167,14 @@ const BookingCard = ({ booking }: { booking: Booking }) => (
         <Text style={styles.cardLocation}>{booking.location}</Text>
       </View>
 
-      <Image source={{ uri: booking.image }} style={styles.cardImage} />
+      <Image
+        source={{ uri: booking.image }}
+        style={styles.cardImage}
+        resizeMode="cover"
+      />
     </View>
   </View>
-);
+));
 
 const EmptyState = ({ message }: { message: string }) => (
   <View style={styles.emptyState}>
@@ -169,22 +186,30 @@ const EmptyState = ({ message }: { message: string }) => (
 export default function MyBookingsScreen() {
   const [activeTab, setActiveTab] = useState<TabType>("upcoming");
 
+  const renderItem: ListRenderItem<Booking> = useCallback(
+    ({ item }) => <BookingCard booking={item} />,
+    []
+  );
+
+  const data = BOOKINGS_DATA[activeTab];
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
-
       <Header />
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {BOOKINGS_DATA[activeTab].length === 0 ? (
-          <EmptyState message={`No ${activeTab} bookings`} />
-        ) : (
-          BOOKINGS_DATA[activeTab].map((booking) => (
-            <BookingCard key={booking.id} booking={booking} />
-          ))
-        )}
-      </ScrollView>
+      {data.length === 0 ? (
+        <EmptyState message={`No ${activeTab} bookings`} />
+      ) : (
+        <FlatList
+          data={data}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
@@ -272,6 +297,6 @@ const styles = StyleSheet.create({
   cardDateTime: { fontSize: 14, color: COLORS.textMuted, marginBottom: 4 },
   cardLocation: { fontSize: 14, color: COLORS.textMuted, marginBottom: 16 },
 
-  emptyState: { paddingVertical: 80, alignItems: "center" },
+  emptyState: { flex: 1, paddingVertical: 80, alignItems: "center" },
   emptyText: { fontSize: 16, color: COLORS.textMuted },
 });

@@ -13,7 +13,10 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform, // ⭐ Added Platform to check OS
 } from "react-native";
+
+import { hs, vs, ms } from "../../utils/responsive";
 
 const { width, height } = Dimensions.get("window");
 
@@ -78,7 +81,6 @@ const ZipDrivePremiumScreen: React.FC = () => {
   const indexRef = useRef(0);
 
   useEffect(() => {
-    // Pulsing Hero Animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(heroScale, {
@@ -94,7 +96,6 @@ const ZipDrivePremiumScreen: React.FC = () => {
       ])
     ).start();
 
-    // Image switching every 6 sec
     const interval = setInterval(() => {
       indexRef.current = (indexRef.current + 1) % CAR_IMAGES.length;
       heroImageAnim.setValue(0);
@@ -111,32 +112,33 @@ const ZipDrivePremiumScreen: React.FC = () => {
 
   const activeImage = CAR_IMAGES[indexRef.current];
 
+  // ⭐ FIX: Calculate top padding for Android devices to avoid the notch/status bar
+  const androidTopPadding = Platform.select({
+    android: StatusBar.currentHeight,
+    default: 0,
+  });
+
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" />
+    <SafeAreaView
+      style={[
+        styles.safe,
+        // ⭐ Apply the calculated padding only to the top, ensuring notch safety
+        { paddingTop: androidTopPadding },
+      ]}
+    >
+      {/* ⭐ FIX: Set StatusBar to translucent so content draws under it. 
+             The paddingTop then correctly offsets the content. */}
+      <StatusBar
+        barStyle="light-content"
+        translucent={true}
+        backgroundColor="transparent"
+      />
+
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: vs(40) }}
       >
-        {/* ---- TOP BAR ---- */}
-        <View style={styles.topBar}>
-          <View style={styles.logoRow}>
-            <LinearGradient colors={[THEME_BG, BUTTON]} style={styles.logoMark}>
-              <Text style={styles.logoEmoji}>🚗</Text>
-            </LinearGradient>
-            <Text style={styles.brand}>ZipDrive</Text>
-          </View>
-
-          <View style={styles.topActions}>
-            <Text style={styles.topActionText}>Log in</Text>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>Sign up</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* ---- HERO (FIXED VERSION) ---- */}
-
+        {/* ---- HERO ---- */}
         <View style={styles.heroWrap}>
           <Animated.View
             style={[
@@ -221,47 +223,20 @@ const ZipDrivePremiumScreen: React.FC = () => {
 
 export default ZipDrivePremiumScreen;
 
-/* ---------------------- Styles ---------------------- */
+/* ---------------------- Styles (responsive) ---------------------- */
 const THEME_BG = "#0a1220";
 const BUTTON = "#01d28e";
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: THEME_BG },
 
-  /* TOP BAR */
-  topBar: {
-    paddingTop: 15,
-    paddingHorizontal: 18,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  logoRow: { flexDirection: "row", alignItems: "center" },
-  logoMark: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoEmoji: { fontSize: 18 },
-  brand: { color: "#fff", fontSize: 20, fontWeight: "700", marginLeft: 10 },
-
-  topActions: { flexDirection: "row", alignItems: "center" },
-  topActionText: { color: "#cdd7f5", marginRight: 14, fontSize: 14 },
-  pill: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  pillText: { color: "#fff", fontWeight: "600" },
+  /* TOP BAR - removed unused styles for brevity */
 
   /* HERO */
-  heroWrap: { marginTop: 18, paddingHorizontal: 18 },
+  heroWrap: { marginTop: vs(18), paddingHorizontal: hs(18) },
   heroContainer: {
     height: height * 0.45,
-    borderRadius: 20,
+    borderRadius: hs(20),
     overflow: "hidden",
     position: "relative",
   },
@@ -274,27 +249,31 @@ const styles = StyleSheet.create({
 
   heroCard: {
     position: "absolute",
-    bottom: 16,
-    left: 16,
-    right: 16,
-    borderRadius: 16,
-    padding: 16,
+    bottom: vs(16),
+    left: hs(16),
+    right: hs(16),
+    borderRadius: hs(16),
+    padding: hs(16),
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  heroCardTitle: { color: "#fff", fontSize: 20, fontWeight: "800" },
-  heroCardSubtitle: { color: "#d9f0ff", marginTop: 4, fontSize: 12 },
+  heroCardTitle: { color: "#fff", fontSize: ms(20), fontWeight: "800" },
+  heroCardSubtitle: {
+    color: "#d9f0ff",
+    marginTop: vs(4),
+    fontSize: ms(12),
+  },
 
   heroCardActions: { flexDirection: "row", alignItems: "center" },
-  ghostText: { color: "#fff", marginRight: 12, fontSize: 14 },
+  ghostText: { color: "#fff", marginRight: hs(12), fontSize: ms(14) },
 
   /* FEATURES */
-  featuresSection: { marginTop: 25, paddingHorizontal: 18 },
+  featuresSection: { marginTop: vs(25), paddingHorizontal: hs(18) },
   sectionTitle: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: ms(18),
     fontWeight: "800",
-    marginBottom: 14,
+    marginBottom: vs(14),
   },
   featuresRow: {
     flexDirection: "row",
@@ -303,51 +282,51 @@ const styles = StyleSheet.create({
   },
   featureCard: {
     width: "48%",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: hs(12),
+    borderRadius: hs(12),
+    marginBottom: vs(12),
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.06)",
   },
   featureIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: hs(40),
+    height: hs(40),
+    borderRadius: hs(10),
     backgroundColor: "rgba(255,255,255,0.1)",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginRight: hs(12),
   },
-  featureEmoji: { fontSize: 20, color: "#fff" },
-  featureTitle: { color: "#fff", fontSize: 14, fontWeight: "700" },
-  featureSubtitle: { color: "#d9f0ff", fontSize: 12 },
+  featureEmoji: { fontSize: ms(20), color: "#fff" },
+  featureTitle: { color: "#fff", fontSize: ms(14), fontWeight: "700" },
+  featureSubtitle: { color: "#d9f0ff", fontSize: ms(12) },
 
   /* SHOWCASE */
-  showcaseSection: { marginTop: 20, paddingHorizontal: 18 },
+  showcaseSection: { marginTop: vs(20), paddingHorizontal: hs(18) },
   carCard: {
-    width: 200,
-    marginRight: 12,
-    borderRadius: 14,
+    width: hs(200),
+    marginRight: hs(12),
+    borderRadius: hs(14),
     overflow: "hidden",
     backgroundColor: "rgba(255,255,255,0.05)",
   },
-  carThumb: { width: "100%", height: 120 },
-  carMeta: { padding: 10 },
-  carTitle: { color: "#fff", fontSize: 14, fontWeight: "700" },
-  carPrice: { color: "#cafff3", fontSize: 12, marginTop: 4 },
+  carThumb: { width: "100%", height: vs(120) },
+  carMeta: { padding: hs(10) },
+  carTitle: { color: "#fff", fontSize: ms(14), fontWeight: "700" },
+  carPrice: { color: "#cafff3", fontSize: ms(12), marginTop: vs(4) },
 
   /* CTA */
-  ctaWrap: { marginTop: 30, paddingHorizontal: 18 },
+  ctaWrap: { marginTop: vs(30), paddingHorizontal: hs(18) },
   ctaFill: {
-    padding: 14,
-    borderRadius: 12,
+    padding: hs(14),
+    borderRadius: hs(12),
     alignItems: "center",
   },
   ctaText: {
     color: "#fff",
     fontWeight: "800",
-    fontSize: 16,
+    fontSize: ms(16),
     letterSpacing: 0.5,
   },
 });

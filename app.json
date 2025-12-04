@@ -3,34 +3,28 @@
     "name": "zipdrive",
     "slug": "zipdrive",
     "version": "1.0.0",
-
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-
     "orientation": "portrait",
-    "icon": "./assets/images/adaptive-icon.png", // use same image as splash
+    "icon": "./assets/images/adaptive-icon.png",
     "scheme": "zipdrive",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true
     },
-
     "android": {
       "package": "com.anonymous.zipdrive",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
-
     "web": {
       "output": "static",
       "favicon": "./assets/images/splash.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -40,12 +34,18 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-font"
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "95705c39-e64d-49b2-89e5-11c55bde3471"
+      }
     }
   }
 }

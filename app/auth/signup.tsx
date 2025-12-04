@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { hs, ms, vs } from "../../utils/responsive";
 import { useAuthStore } from "../store/authStore";
 
 const COLORS = {
@@ -57,27 +58,23 @@ export default function Register({
     password: "",
     role: "guest",
   });
+
   const [errorMessage, setErrorMessage] = useState("");
 
   const { signup, loading } = useAuthStore();
   const router = useRouter();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!loading && useAuthStore.getState().user && !errorMessage) {
-      if (onRegisterSuccess) {
-        onRegisterSuccess();
-      } else {
-        router.replace("/(tabs)");
-      }
+      onRegisterSuccess?.();
       onClose?.();
+      router.replace("/(tabs)");
     }
   }, [loading]);
 
   const handleChange = (name: keyof UserRegister, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errorMessage) {
-      setErrorMessage("");
-    }
+    if (errorMessage) setErrorMessage("");
   };
 
   const handleRoleToggle = () => {
@@ -87,7 +84,6 @@ export default function Register({
     }));
   };
 
-  // In your Register component (only this function changes)
   const handleSubmit = async () => {
     setErrorMessage("");
 
@@ -99,16 +95,13 @@ export default function Register({
     try {
       const name = `${formData.first_name} ${formData.last_name}`.trim();
 
-      // THIS IS THE ONLY LINE THAT CHANGES
       await signup(
         name,
         formData.email,
         formData.password,
-        formData.role, // ← send "host" or "guest"
-        formData.phone // ← send phone number
+        formData.role,
+        formData.phone
       );
-
-      // Success → useEffect will redirect
     } catch (err: any) {
       const errorMsg = err.message || "Registration failed";
       setErrorMessage(errorMsg);
@@ -125,21 +118,25 @@ export default function Register({
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: "center",
-          padding: 28,
+          padding: hs(24),
         }}
         keyboardShouldPersistTaps="handled"
-        style={{ backgroundColor: COLORS.background }}
       >
-        <View style={{ flex: 1, justifyContent: "center", gap: 28 }}>
+        <View style={{ gap: vs(24) }}>
           {onClose && (
             <TouchableOpacity
               onPress={onClose}
               style={{ alignSelf: "flex-end" }}
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              hitSlop={{
+                top: hs(12),
+                bottom: hs(12),
+                left: hs(12),
+                right: hs(12),
+              }}
             >
               <Text
                 style={{
-                  fontSize: 28,
+                  fontSize: ms(26),
                   color: COLORS.textMuted,
                   fontWeight: "bold",
                 }}
@@ -149,77 +146,75 @@ export default function Register({
             </TouchableOpacity>
           )}
 
-          <View>
-            <Text
-              style={{ fontSize: 32, fontWeight: "700", color: COLORS.text }}
-            >
-              Create Account
-            </Text>
-          </View>
+          <Text
+            style={{
+              fontSize: ms(30),
+              fontWeight: "700",
+              color: COLORS.text,
+            }}
+          >
+            Create Account
+          </Text>
 
-          <View style={{ gap: 12 }}>
+          {/* Role Toggle */}
+          <View style={{ gap: vs(10) }}>
             <Text
               style={{
-                fontSize: 18,
+                fontSize: ms(16),
                 fontWeight: "600",
                 color: COLORS.text,
               }}
             >
-              Role: {formData.role === "guest" ? "guest" : "host"}
+              Role: {formData.role}
             </Text>
+
             <TouchableOpacity
-              style={[
-                {
-                  flexDirection: "row",
-                  alignItems: "center",
-                  padding: 16,
-                  borderRadius: 25,
-                  borderWidth: 2,
-                  width: 140,
-                  justifyContent:
-                    formData.role === "host" ? "flex-end" : "flex-start",
-                  paddingHorizontal: 20,
-                },
-                formData.role === "host"
-                  ? {
-                      borderColor: COLORS.button,
-                      backgroundColor: COLORS.button + "20",
-                    }
-                  : {
-                      borderColor: COLORS.border,
-                      backgroundColor: COLORS.inputBg,
-                    },
-              ]}
               onPress={handleRoleToggle}
               disabled={loading}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingVertical: vs(12),
+                paddingHorizontal: hs(16),
+                width: hs(130),
+                borderRadius: ms(24),
+                borderWidth: 2,
+                justifyContent:
+                  formData.role === "host" ? "flex-end" : "flex-start",
+                borderColor:
+                  formData.role === "host" ? COLORS.button : COLORS.inputBorder,
+                backgroundColor:
+                  formData.role === "host"
+                    ? COLORS.button + "25"
+                    : COLORS.inputBg,
+              }}
             >
               <Text
-                style={[
-                  {
-                    fontSize: 16,
-                    fontWeight: "600",
-                  },
-                  formData.role === "host"
-                    ? { color: COLORS.button }
-                    : { color: COLORS.textMuted },
-                ]}
+                style={{
+                  fontSize: ms(14),
+                  fontWeight: "600",
+                  color:
+                    formData.role === "host" ? COLORS.button : COLORS.textMuted,
+                }}
               >
-                {formData.role === "host" ? "Host" : "Guest"}
+                {formData.role}
               </Text>
             </TouchableOpacity>
           </View>
 
-          <View style={{ gap: 24 }}>
-            <View style={{ flexDirection: "row", gap: 16 }}>
+          {/* Form Fields */}
+          <View style={{ gap: vs(18) }}>
+            {/* First & Last Name */}
+            <View style={{ flexDirection: "row", gap: hs(12) }}>
+              {/* First */}
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    fontSize: 14,
+                    fontSize: ms(12),
                     fontWeight: "600",
                     color: COLORS.textMuted,
-                    marginBottom: 8,
-                    textTransform: "uppercase",
-                    letterSpacing: 1,
+                    marginBottom: vs(6),
+                    letterSpacing: 0.5,
                   }}
                 >
                   First Name
@@ -229,27 +224,27 @@ export default function Register({
                     borderWidth: 2,
                     borderColor: COLORS.inputBorder,
                     backgroundColor: COLORS.inputBg,
-                    padding: 16,
-                    borderRadius: 12,
-                    fontSize: 16,
+                    padding: hs(14),
+                    borderRadius: ms(10),
+                    fontSize: ms(15),
                     color: COLORS.text,
                   }}
                   placeholder="First Name"
                   placeholderTextColor={COLORS.textMuted}
                   value={formData.first_name}
                   onChangeText={(value) => handleChange("first_name", value)}
-                  editable={!loading}
                 />
               </View>
+
+              {/* Last */}
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    fontSize: 14,
+                    fontSize: ms(12),
                     fontWeight: "600",
                     color: COLORS.textMuted,
-                    marginBottom: 8,
-                    textTransform: "uppercase",
-                    letterSpacing: 1,
+                    marginBottom: vs(6),
+                    letterSpacing: 0.5,
                   }}
                 >
                   Last Name
@@ -259,82 +254,77 @@ export default function Register({
                     borderWidth: 2,
                     borderColor: COLORS.inputBorder,
                     backgroundColor: COLORS.inputBg,
-                    padding: 16,
-                    borderRadius: 12,
-                    fontSize: 16,
+                    padding: hs(14),
+                    borderRadius: ms(10),
+                    fontSize: ms(15),
                     color: COLORS.text,
                   }}
                   placeholder="Last Name"
                   placeholderTextColor={COLORS.textMuted}
                   value={formData.last_name}
                   onChangeText={(value) => handleChange("last_name", value)}
-                  editable={!loading}
                 />
               </View>
             </View>
 
+            {/* Email */}
             <View>
               <Text
                 style={{
-                  fontSize: 14,
+                  fontSize: ms(12),
                   fontWeight: "600",
                   color: COLORS.textMuted,
-                  marginBottom: 8,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
+                  marginBottom: vs(6),
                 }}
               >
                 Email
               </Text>
               <TextInput
-                style={[
-                  {
-                    borderWidth: 2,
-                    borderColor: COLORS.inputBorder,
-                    backgroundColor: COLORS.inputBg,
-                    padding: 16,
-                    borderRadius: 12,
-                    fontSize: 16,
-                    color: COLORS.text,
-                  },
-                  errorMessage ? { borderColor: COLORS.errorBorder } : {},
-                ]}
+                style={{
+                  borderWidth: 2,
+                  borderColor: errorMessage
+                    ? COLORS.errorBorder
+                    : COLORS.inputBorder,
+                  backgroundColor: COLORS.inputBg,
+                  padding: hs(14),
+                  borderRadius: ms(10),
+                  fontSize: ms(15),
+                  color: COLORS.text,
+                }}
                 placeholder="Email"
                 placeholderTextColor={COLORS.textMuted}
                 value={formData.email}
                 onChangeText={(value) => handleChange("email", value)}
-                keyboardType="email-address"
                 autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
+                keyboardType="email-address"
               />
             </View>
 
+            {/* Error */}
             {errorMessage ? (
               <View
                 style={{
                   backgroundColor: COLORS.errorBg,
-                  padding: 16,
-                  borderRadius: 12,
+                  padding: hs(12),
+                  borderRadius: ms(10),
                   borderLeftWidth: 4,
                   borderLeftColor: COLORS.errorBorder,
                 }}
               >
-                <Text style={{ color: COLORS.text, fontSize: 16 }}>
+                <Text style={{ color: COLORS.text, fontSize: ms(14) }}>
                   {errorMessage}
                 </Text>
               </View>
             ) : null}
 
+            {/* Phone */}
             <View>
               <Text
                 style={{
-                  fontSize: 14,
+                  fontSize: ms(12),
                   fontWeight: "600",
                   color: COLORS.textMuted,
-                  marginBottom: 8,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
+                  marginBottom: vs(6),
                 }}
               >
                 Phone
@@ -344,29 +334,27 @@ export default function Register({
                   borderWidth: 2,
                   borderColor: COLORS.inputBorder,
                   backgroundColor: COLORS.inputBg,
-                  padding: 16,
-                  borderRadius: 12,
-                  fontSize: 16,
+                  padding: hs(14),
+                  borderRadius: ms(10),
+                  fontSize: ms(15),
                   color: COLORS.text,
                 }}
                 placeholder="Phone Number"
                 placeholderTextColor={COLORS.textMuted}
                 value={formData.phone}
-                onChangeText={(value) => handleChange("phone", value)}
                 keyboardType="phone-pad"
-                editable={!loading}
+                onChangeText={(value) => handleChange("phone", value)}
               />
             </View>
 
+            {/* Password */}
             <View>
               <Text
                 style={{
-                  fontSize: 14,
+                  fontSize: ms(12),
                   fontWeight: "600",
                   color: COLORS.textMuted,
-                  marginBottom: 8,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
+                  marginBottom: vs(6),
                 }}
               >
                 Password
@@ -376,31 +364,27 @@ export default function Register({
                   borderWidth: 2,
                   borderColor: COLORS.inputBorder,
                   backgroundColor: COLORS.inputBg,
-                  padding: 16,
-                  borderRadius: 12,
-                  fontSize: 16,
+                  padding: hs(14),
+                  borderRadius: ms(10),
+                  fontSize: ms(15),
                   color: COLORS.text,
                 }}
                 placeholder="Password"
                 placeholderTextColor={COLORS.textMuted}
+                secureTextEntry
                 value={formData.password}
                 onChangeText={(value) => handleChange("password", value)}
-                secureTextEntry
-                editable={!loading}
               />
             </View>
 
+            {/* Register Button */}
             <TouchableOpacity
-              style={[
-                {
-                  padding: 18,
-                  borderRadius: 14,
-                  alignItems: "center",
-                },
-                loading
-                  ? { backgroundColor: COLORS.buttonDark }
-                  : { backgroundColor: COLORS.button },
-              ]}
+              style={{
+                paddingVertical: vs(14),
+                borderRadius: ms(12),
+                alignItems: "center",
+                backgroundColor: loading ? COLORS.buttonDark : COLORS.button,
+              }}
               onPress={handleSubmit}
               disabled={loading}
             >
@@ -410,7 +394,7 @@ export default function Register({
                 <Text
                   style={{
                     color: COLORS.background,
-                    fontSize: 18,
+                    fontSize: ms(16),
                     fontWeight: "600",
                   }}
                 >
@@ -419,9 +403,10 @@ export default function Register({
               )}
             </TouchableOpacity>
 
+            {/* Login Switch */}
             {onSwitch && (
               <View style={{ alignItems: "center" }}>
-                <Text style={{ color: COLORS.textMuted, fontSize: 16 }}>
+                <Text style={{ color: COLORS.textMuted, fontSize: ms(14) }}>
                   Already have an account?{" "}
                   <Text
                     onPress={onSwitch}

@@ -1,17 +1,22 @@
 import React from "react";
 import {
+  Dimensions,
   Modal,
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import Login from "../auth/login"; // Adjust path as needed
-import Register from "../auth/signup"; // Adjust path as needed
+import { hs, ms, vs } from "../../utils/responsive";
+import Login from "../auth/login";
+import Register from "../auth/signup";
 
-// Theme Configuration
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+// Theme
 const COLORS = {
   background: "#0a1220",
   button: "#01d28e",
@@ -22,58 +27,43 @@ const COLORS = {
   iconBg: "#1a2332",
 } as const;
 
-// ============ Component Interfaces ============
-interface ButtonProps {
-  title: string;
-  onPress: () => void;
-}
-
-interface IconProps {
-  size?: number;
-  color?: string;
-}
-
-// ============ Subcomponents ============
-const UserIcon: React.FC = () => (
+// ============ COMPONENTS ============
+const UserIcon = () => (
   <View style={styles.iconContainer}>
-    <View style={styles.userIconCircle}>
-      <View style={styles.userIconHead} />
-    </View>
-    <View style={styles.userIconBody} />
+    <View style={styles.userHead} />
+    <View style={styles.userBody} />
   </View>
 );
 
-const Header: React.FC = () => (
+const Header = () => (
   <View style={styles.header}>
     <Text style={styles.title}>Access Your Account</Text>
     <Text style={styles.subtitle}>
-      Join our community to save your progress,{"\n"}connect with others, and
+      Join our community to save your progress, connect{"\n"}with others, and
       more.
     </Text>
   </View>
 );
 
-const PrimaryButton: React.FC<ButtonProps> = ({ title, onPress }) => (
+const PrimaryButton = ({ title, onPress }: any) => (
   <TouchableOpacity
     style={[styles.button, styles.primaryButton]}
     onPress={onPress}
-    activeOpacity={0.8}
   >
     <Text style={styles.primaryButtonText}>{title}</Text>
   </TouchableOpacity>
 );
 
-const SecondaryButton: React.FC<ButtonProps> = ({ title, onPress }) => (
+const SecondaryButton = ({ title, onPress }: any) => (
   <TouchableOpacity
     style={[styles.button, styles.secondaryButton]}
     onPress={onPress}
-    activeOpacity={0.8}
   >
     <Text style={styles.secondaryButtonText}>{title}</Text>
   </TouchableOpacity>
 );
 
-const Divider: React.FC = () => (
+const Divider = () => (
   <View style={styles.dividerContainer}>
     <View style={styles.dividerLine} />
     <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
@@ -81,212 +71,169 @@ const Divider: React.FC = () => (
   </View>
 );
 
-const SocialButton: React.FC<{ onPress: () => void; icon: string }> = ({
-  onPress,
-  icon,
-}) => (
-  <TouchableOpacity
-    style={styles.socialButton}
-    onPress={onPress}
-    activeOpacity={0.8}
-  >
+const SocialButton = ({ onPress, icon }: any) => (
+  <TouchableOpacity style={styles.socialButton} onPress={onPress}>
     <Text style={styles.socialIcon}>{icon}</Text>
   </TouchableOpacity>
 );
 
-const SocialButtons: React.FC<{
-  onApplePress: () => void;
-  onGooglePress: () => void;
-}> = ({ onApplePress, onGooglePress }) => (
+const SocialButtons = ({ onApplePress, onGooglePress }: any) => (
   <View style={styles.socialContainer}>
     <SocialButton icon="🍎" onPress={onApplePress} />
     <SocialButton icon="G" onPress={onGooglePress} />
   </View>
 );
 
-const Footer: React.FC = () => (
+const Footer = () => (
   <Text style={styles.footer}>
     By continuing, you agree to our Terms of Service and Privacy Policy.
   </Text>
 );
 
-// ============ Main Component ============
-const AuthScreen: React.FC = () => {
-  // Modal state management
+// ============ MAIN SCREEN ============
+const AuthScreen = () => {
   const [showLoginModal, setShowLoginModal] = React.useState(false);
   const [showRegisterModal, setShowRegisterModal] = React.useState(false);
   const [remark, setRemark] = React.useState("");
 
-  // Handlers - FULLY FUNCTIONAL
-  const handleSignUp = () => {
-    setShowRegisterModal(true);
-  };
-
-  const handleLogin = () => {
-    setShowLoginModal(true);
-  };
-
-  const handleAppleLogin = () => {
-    console.log("Apple login pressed");
-  };
-
-  const handleGoogleLogin = () => {
-    console.log("Google login pressed");
-  };
-
-  // Modal control handlers
-  const handleCloseModal = () => {
+  const handleClose = () => {
     setShowLoginModal(false);
     setShowRegisterModal(false);
     setRemark("");
-  };
-
-  const handleSwitchToLogin = () => {
-    setShowRegisterModal(false);
-    setShowLoginModal(true);
-  };
-
-  const handleSwitchToRegister = () => {
-    setShowLoginModal(false);
-    setShowRegisterModal(true);
-  };
-
-  const handleRegisterSuccess = () => {
-    setShowRegisterModal(false);
-    setShowLoginModal(true);
-    setRemark("Registration successful! Please login.");
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
-      <View style={styles.content}>
+      {/* ScrollView solves small device overflow */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <UserIcon />
         <Header />
 
         <View style={styles.buttonContainer}>
-          <PrimaryButton title="Sign Up" onPress={handleSignUp} />
-          <SecondaryButton title="Login" onPress={handleLogin} />
+          <PrimaryButton
+            title="Sign Up"
+            onPress={() => setShowRegisterModal(true)}
+          />
+          <SecondaryButton
+            title="Login"
+            onPress={() => setShowLoginModal(true)}
+          />
         </View>
 
         <Divider />
 
         <SocialButtons
-          onApplePress={handleAppleLogin}
-          onGooglePress={handleGoogleLogin}
+          onApplePress={() => console.log("apple")}
+          onGooglePress={() => console.log("google")}
         />
-      </View>
 
-      <Footer />
+        <Footer />
+      </ScrollView>
 
       {/* Login Modal */}
-      <Modal
-        visible={showLoginModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={handleCloseModal}
-      >
+      <Modal visible={showLoginModal} animationType="slide">
         <Login
-          onClose={handleCloseModal}
-          onSwitch={handleSwitchToRegister}
-          onLoginSuccess={() => {
-            // Auto-navigate handled by Login component
-            handleCloseModal();
+          onClose={handleClose}
+          onSwitch={() => {
+            setShowLoginModal(false);
+            setShowRegisterModal(true);
           }}
+          onLoginSuccess={handleClose}
           remark={remark}
         />
       </Modal>
 
       {/* Register Modal */}
-      <Modal
-        visible={showRegisterModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={handleCloseModal}
-      >
+      <Modal visible={showRegisterModal} animationType="slide">
         <Register
-          onClose={handleCloseModal}
-          onSwitch={handleSwitchToLogin}
-          onRegisterSuccess={handleRegisterSuccess}
+          onClose={handleClose}
+          onSwitch={() => {
+            setShowRegisterModal(false);
+            setShowLoginModal(true);
+          }}
+          onRegisterSuccess={() => {
+            setShowRegisterModal(false);
+            setShowLoginModal(true);
+            setRemark("Registration successful! Please login.");
+          }}
         />
       </Modal>
     </SafeAreaView>
   );
 };
 
-// ============ Styles ============
+// ============ STYLES ============
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 28,
-    justifyContent: "center",
+
+  scrollContent: {
+    paddingHorizontal: hs(20),
+    paddingTop: vs(30),
+    paddingBottom: vs(40),
     alignItems: "center",
   },
 
-  // Icon styles
   iconContainer: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
+    width: hs(90), // reduced for small devices
+    height: hs(90),
+    borderRadius: hs(45),
     backgroundColor: COLORS.iconBg,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: vs(20),
   },
-  userIconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.textMuted,
-    marginBottom: 5,
-  },
-  userIconHead: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  userHead: {
+    width: hs(30),
+    height: hs(30),
+    borderRadius: hs(15),
     backgroundColor: COLORS.textMuted,
   },
-  userIconBody: {
-    width: 80,
-    height: 50,
+  userBody: {
+    width: hs(45),
+    height: hs(25),
+    borderRadius: hs(12),
+    marginTop: vs(6),
     backgroundColor: COLORS.textMuted,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
   },
 
-  // Header styles
   header: {
     alignItems: "center",
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: COLORS.textMuted,
-    textAlign: "center",
-    lineHeight: 24,
+    marginBottom: vs(20),
   },
 
-  // Button styles
+  title: {
+    fontSize: ms(22),
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom: vs(8),
+    textAlign: "center",
+  },
+
+  subtitle: {
+    fontSize: ms(13),
+    color: COLORS.textMuted,
+    textAlign: "center",
+    lineHeight: ms(18),
+  },
+
   buttonContainer: {
     width: "100%",
-    gap: 16,
+    gap: vs(10),
+    marginBottom: vs(20),
   },
+
   button: {
     width: "100%",
-    height: 56,
-    borderRadius: 28,
+    height: vs(44),
+    borderRadius: hs(22),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -297,64 +244,63 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.buttonDark,
   },
   primaryButtonText: {
-    fontSize: 18,
+    fontSize: ms(15),
     fontWeight: "600",
     color: COLORS.background,
   },
   secondaryButtonText: {
-    fontSize: 18,
+    fontSize: ms(15),
     fontWeight: "600",
     color: COLORS.text,
   },
 
-  // Divider styles
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
-    marginVertical: 32,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  dividerText: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginHorizontal: 16,
-    fontWeight: "500",
-    letterSpacing: 0.5,
+    marginVertical: vs(15),
   },
 
-  // Social button styles
+  dividerLine: {
+    flex: 1,
+    height: vs(1),
+    backgroundColor: COLORS.border,
+  },
+
+  dividerText: {
+    fontSize: ms(11),
+    color: COLORS.textMuted,
+    marginHorizontal: hs(10),
+  },
+
   socialContainer: {
     flexDirection: "row",
-    gap: 20,
+    gap: hs(15),
   },
+
   socialButton: {
-    width: 140,
-    height: 56,
-    borderRadius: 28,
+    width: hs(100),
+    height: vs(44),
+    borderRadius: hs(22),
     backgroundColor: COLORS.buttonDark,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
+    borderWidth: hs(1),
     borderColor: COLORS.border,
   },
+
   socialIcon: {
-    fontSize: 24,
+    fontSize: ms(20),
     color: COLORS.text,
   },
 
-  // Footer styles
   footer: {
-    fontSize: 12,
+    fontSize: ms(10.5),
     color: COLORS.textMuted,
     textAlign: "center",
-    paddingHorizontal: 40,
-    paddingBottom: 20,
-    lineHeight: 18,
+    marginTop: vs(20),
+    lineHeight: ms(14),
+    paddingHorizontal: hs(15),
   },
 });
 
