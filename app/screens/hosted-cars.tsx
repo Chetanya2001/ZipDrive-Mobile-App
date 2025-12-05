@@ -1,214 +1,269 @@
 // app/(tabs)/hosted-cars.tsx
 
-import React, { memo, useCallback } from "react";
+import React, { useEffect, memo } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
-  ListRenderItem,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
-// ────────────────────── THEME ──────────────────────
-const COLORS = {
-  background: "#0a1220",
-  button: "#01d28e",
-  cardBg: "#1a2332",
-  text: "#ffffff",
-  textMuted: "#8b92a8",
-  statusAvailable: "#8b92a8",
-  statusBooked: "#f59e0b",
-} as const;
+import useHostedCarsStore from "../store/hostedCarStore";
+import useAuthStore from "../store/authStore";
 
-// ────────────────────── TYPES & DATA ──────────────────────
-interface Car {
+// ────────────────────── REAL BACKEND CAR TYPE ──────────────────────
+export interface Car {
   id: string;
-  title: string;
-  status: "available" | "booked";
-  image: string;
+  make: string;
+  model: string;
+  year: number;
+  price_per_hour: number;
+  kms_driven?: number;
+  available_from?: string;
+  available_till?: string;
+  documents: {
+    rc_image_front?: string;
+    rc_image_back?: string;
+    owner_name?: string;
+    insurance_company?: string;
+    insurance_image?: string;
+    rc_number?: string;
+    rc_valid_till?: string;
+    city_of_registration?: string;
+  } | null;
+  photos: string[]; // ← this is what comes from CarPhoto model
 }
 
-const CARS_DATA: Car[] = [
-  {
-    id: "1",
-    title: "Tesla Model 3",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1560958089-b8a1929ceb63?w=800&h=400&fit=crop",
-  },
-  {
-    id: "2",
-    title: "Ford Mustang Mach-E",
-    status: "booked",
-    image:
-      "https://images.unsplash.com/photo-1615212776469-5be61d68bc3f?w=800&h=400&fit=crop",
-  },
-  {
-    id: "3",
-    title: "BMW i4",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1641397536942-9a3d5362368b?w=800&h=400&fit=crop",
-  },
-];
-
 // ────────────────────── COMPONENTS ──────────────────────
-const Header = () => {
+const Header = memo(() => {
   const insets = useSafeAreaInsets();
   return (
-    <View
-      style={{ paddingTop: insets.top, backgroundColor: COLORS.background }}
-    >
+    <View style={{ paddingTop: insets.top, backgroundColor: "#0a1220e1a" }}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Hosted Cars</Text>
-        <TouchableOpacity style={styles.searchButton}>
-          <Text style={styles.searchIcon}>🔍</Text>
+        <Text style={styles.headerTitle}>My Listed Cars</Text>
+        <TouchableOpacity style={styles.addBtn}>
+          <Text style={styles.addBtnText}>+ Add Car</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-};
+});
 
-const CarCard = memo(({ car }: { car: Car }) => (
-  <View style={styles.card}>
-    <Image
-      source={{ uri: car.image }}
-      style={styles.cardImage}
-      resizeMode="cover"
-    />
+const CarCard = memo(({ car }: { car: Car }) => {
+  const router = useRouter();
+  const mainPhoto = car.photos[0] || null;
 
-    <View style={styles.cardFooter}>
-      <View style={styles.cardLeft}>
-        <Text style={styles.cardTitle}>{car.title}</Text>
-        <View style={styles.statusContainer}>
-          {car.status === "booked" && <Text style={styles.statusDot}>•</Text>}
-          <Text
-            style={[
-              styles.statusText,
-              car.status === "booked"
-                ? { color: COLORS.statusBooked }
-                : { color: COLORS.statusAvailable },
-            ]}
-          >
-            {car.status.charAt(0).toUpperCase() + car.status.slice(1)}
-          </Text>
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push(`/car-details/${car.id}` as any)}
+    >
+      {mainPhoto ? (
+        <Image source={{ uri: mainPhoto }} style={styles.carImage} />
+      ) : (
+        <View style={styles.placeholder}>
+          <Text style={styles.placeholderText}>No Photo</Text>
+        </View>
+      )}
+
+      <View style={styles.info}>
+        <Text style={styles.carName}>
+          {car.make} {car.model}
+        </Text>
+        <Text style={styles.year}>• {car.year}</Text>
+
+        <Text style={styles.price}>
+          ₹{car.price_per_hour}
+          <Text style={styles.perHour}> / hour</Text>
+        </Text>
+
+        {car.documents?.rc_number && (
+          <Text style={styles.rc}>RC: {car.documents.rc_number}</Text>
+        )}
+
+        <View style={styles.footer}>
+          <Text style={styles.photosCount}>{car.photos.length} photos</Text>
+          <Text style={styles.viewDetails}>View Details →</Text>
         </View>
       </View>
+    </TouchableOpacity>
+  );
+});
 
-      <TouchableOpacity style={styles.detailsButton}>
-        <Text style={styles.detailsText}>Details</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-));
-
-const AddCarButton = () => (
-  <TouchableOpacity style={styles.addButton}>
-    <Text style={styles.addText}>+ Add a Car</Text>
-  </TouchableOpacity>
-);
-
-const EmptyState = ({ message }: { message: string }) => (
-  <View style={styles.emptyState}>
-    <Text style={styles.emptyText}>{message}</Text>
+const EmptyState = () => (
+  <View style={styles.empty}>
+    <Text style={styles.emptyIcon}>Car</Text>
+    <Text style={styles.emptyTitle}>No cars listed yet</Text>
+    <Text style={styles.emptySubtitle}>
+      Tap "+ Add Car" to list your first vehicle
+    </Text>
   </View>
 );
 
 // ────────────────────── MAIN SCREEN ──────────────────────
-export default function MyHostedCarsScreen() {
-  const renderItem: ListRenderItem<Car> = useCallback(
-    ({ item }) => <CarCard car={item} />,
-    []
-  );
+export default function HostedCarsScreen() {
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const { cars, loading, error, fetchMyCars } = useHostedCarsStore();
+
+  useEffect(() => {
+    if (user?.role === "host") {
+      fetchMyCars();
+    }
+  }, [user]);
+
+  const handleRefresh = () => fetchMyCars();
+
+  if (loading && cars.length === 0) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#01d28e" />
+        <Text style={styles.loadingText}>Loading your cars...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>Failed to load cars</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={fetchMyCars}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
-
+      <StatusBar barStyle="light-content" />
       <Header />
 
-      {CARS_DATA.length === 0 ? (
-        <EmptyState message="No hosted cars" />
-      ) : (
-        <FlatList
-          data={CARS_DATA}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          ListFooterComponent={<AddCarButton />}
-        />
-      )}
+      <FlatList
+        data={cars}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <CarCard car={item} />}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
+        }
+        ListEmptyComponent={<EmptyState />}
+      />
+
+      {/* Floating Add Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push("/add-car" as any)}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
-// ────────────────────── STYLES ──────────────────────
+// ─────────────────────── STYLES ──────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1, backgroundColor: "#0a0e1a" },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#0a0e1a",
+  },
 
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    alignItems: "center",
+    padding: 20,
   },
-  headerTitle: { fontSize: 24, fontWeight: "700", color: COLORS.text, flex: 1 },
-  searchButton: {
-    width: 40,
-    height: 40,
+  headerTitle: { fontSize: 24, fontWeight: "700", color: "#fff" },
+  addBtn: {
+    backgroundColor: "#01d28e",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  addBtnText: { color: "#000", fontWeight: "600" },
+
+  list: { padding: 16, paddingBottom: 100 },
+
+  card: {
+    backgroundColor: "#1a2332",
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: "hidden",
+    elevation: 5,
+  },
+  carImage: { width: "100%", height: 200 },
+  placeholder: {
+    height: 200,
+    backgroundColor: "#2d3748",
     justifyContent: "center",
     alignItems: "center",
   },
-  searchIcon: { fontSize: 20, color: COLORS.text },
+  placeholderText: { color: "#8b92a8", fontSize: 16 },
 
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  info: { padding: 16 },
+  carName: { fontSize: 20, fontWeight: "700", color: "#fff" },
+  year: { fontSize: 16, color: "#8b92a8", marginTop: 4 },
+  price: { fontSize: 22, fontWeight: "800", color: "#01d28e", marginTop: 8 },
+  perHour: { fontSize: 14, color: "#8b92a8" },
+  rc: { fontSize: 14, color: "#8b92a8", marginTop: 6 },
 
-  card: {
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 20,
-    marginBottom: 16,
-    overflow: "hidden",
-  },
-  cardImage: { width: "100%", height: 180, borderRadius: 16 },
-  cardFooter: {
+  footer: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
-  },
-  cardLeft: { flex: 1 },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  statusContainer: { flexDirection: "row", alignItems: "center" },
-  statusDot: { fontSize: 16, color: COLORS.statusBooked, marginRight: 4 },
-  statusText: { fontSize: 14, fontWeight: "500" },
-  detailsButton: {
-    backgroundColor: "rgba(139, 146, 168, 0.2)",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  detailsText: { fontSize: 14, fontWeight: "600", color: COLORS.text },
-
-  addButton: {
-    backgroundColor: COLORS.button,
-    borderRadius: 20,
-    paddingVertical: 16,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 12,
   },
-  addText: { fontSize: 16, fontWeight: "700", color: COLORS.text },
+  photosCount: { color: "#8b92a8", fontSize: 14 },
+  viewDetails: { color: "#01d28e", fontWeight: "600" },
 
-  emptyState: { flex: 1, paddingVertical: 80, alignItems: "center" },
-  emptyText: { fontSize: 16, color: COLORS.textMuted },
+  empty: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyIcon: { fontSize: 80, marginBottom: 20 },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 8,
+  },
+  emptySubtitle: { fontSize: 16, color: "#8b92a8", textAlign: "center" },
+
+  loadingText: { marginTop: 16, color: "#8b92a8" },
+  errorText: { color: "#ef4444", fontSize: 18, marginBottom: 16 },
+  retryBtn: {
+    backgroundColor: "#01d28e",
+    padding: 12,
+    borderRadius: 20,
+    paddingHorizontal: 24,
+  },
+  retryText: { color: "#000", fontWeight: "700" },
+
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#01d28e",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 8,
+  },
+  fabText: { fontSize: 32, fontWeight: "300", color: "#000" },
 });
