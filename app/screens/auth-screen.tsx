@@ -174,28 +174,35 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
+  // ✅ FIXED: Proper top spacing
   scrollContent: {
     paddingHorizontal: hs(20),
-    paddingTop: vs(30),
-    paddingBottom: vs(40),
+    paddingTop: vs(50), // ✅ Increased from vs(30)
+    paddingBottom: vs(80), // ✅ Increased for FAB/FAB space
     alignItems: "center",
+    flexGrow: 1, // ✅ Ensures full height
   },
 
+  // ✅ Add top margin to UserIcon for breathing room
   iconContainer: {
-    width: hs(90), // reduced for small devices
+    width: hs(90),
     height: hs(90),
     borderRadius: hs(45),
     backgroundColor: COLORS.iconBg,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: vs(20),
+    marginTop: vs(20), // ✅ EXTRA top spacing
+    marginBottom: vs(24), // ✅ Slightly more bottom
   },
+
+  // ✅ Rest unchanged...
   userHead: {
     width: hs(30),
     height: hs(30),
     borderRadius: hs(15),
     backgroundColor: COLORS.textMuted,
   },
+
   userBody: {
     width: hs(45),
     height: hs(25),
@@ -206,14 +213,14 @@ const styles = StyleSheet.create({
 
   header: {
     alignItems: "center",
-    marginBottom: vs(20),
+    marginBottom: vs(32), // ✅ Increased spacing
   },
 
   title: {
     fontSize: ms(22),
     fontWeight: "700",
     color: COLORS.text,
-    marginBottom: vs(8),
+    marginBottom: vs(12), // ✅ Increased from vs(8)
     textAlign: "center",
   },
 
@@ -224,6 +231,7 @@ const styles = StyleSheet.create({
     lineHeight: ms(18),
   },
 
+  // ... rest of styles unchanged
   buttonContainer: {
     width: "100%",
     gap: vs(10),
@@ -237,17 +245,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   primaryButton: {
     backgroundColor: COLORS.button,
   },
+
   secondaryButton: {
     backgroundColor: COLORS.buttonDark,
   },
+
   primaryButtonText: {
     fontSize: ms(15),
     fontWeight: "600",
     color: COLORS.background,
   },
+
   secondaryButtonText: {
     fontSize: ms(15),
     fontWeight: "600",
@@ -298,7 +310,7 @@ const styles = StyleSheet.create({
     fontSize: ms(10.5),
     color: COLORS.textMuted,
     textAlign: "center",
-    marginTop: vs(20),
+    marginTop: vs(24), // ✅ Increased
     lineHeight: ms(14),
     paddingHorizontal: hs(15),
   },

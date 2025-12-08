@@ -19,7 +19,9 @@
     "android": {
       "package": "com.anonymous.zipdrive",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [],
+      "usesCleartextTraffic": true
     },
     "web": {
       "output": "static",
@@ -35,7 +37,8 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

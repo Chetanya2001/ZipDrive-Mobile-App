@@ -5,11 +5,10 @@ import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "../store/authStore";
 
-import HostedCarsScreen from "./hosted-cars";
+import HostedCarsLayout from "./hosted-cars/_layout";
 import HomeScreen from "./index";
 import MyBookingsScreen from "./my-bookings";
 import ProfileScreen from "./profile";
-
 const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
@@ -57,7 +56,7 @@ export default function TabLayout() {
       {isHost && (
         <Tab.Screen
           name="HostedCars"
-          component={HostedCarsScreen}
+          component={HostedCarsLayout}
           options={{
             title: "Hosted Cars",
             tabBarIcon: ({ color, size }) => (

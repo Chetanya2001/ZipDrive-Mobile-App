@@ -1,9 +1,17 @@
-import { Stack } from "expo-router";
+import { createStackNavigator } from "@react-navigation/stack";
+import HostedCarsScreen from "./index";
 
-export default function MyHostedCars() {
+const Stack = createStackNavigator();
+
+export default function HostedCarsLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-    </Stack>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" component={HostedCarsScreen} />
+      <Stack.Screen
+        name="add-car"
+        component={require("./add-car/index").default}
+        options={{ presentation: "modal", headerShown: false }}
+      />
+    </Stack.Navigator>
   );
 }
