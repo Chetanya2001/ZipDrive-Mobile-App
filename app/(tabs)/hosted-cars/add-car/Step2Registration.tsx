@@ -130,6 +130,8 @@ const Step2Registration: React.FC<Step2RegistrationProps> = ({
 
   // Date Picker Handlers
   const onDatePress = () => {
+    // Ensure touch feedback
+    console.log("Calendar icon pressed");
     setShowDatePicker(true);
   };
 
@@ -217,16 +219,6 @@ const Step2Registration: React.FC<Step2RegistrationProps> = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Progress */}
-        <View style={styles.progressSection}>
-          <Text style={styles.progressText}>
-            Step 2 of 6: Registration Details
-          </Text>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: "33.33%" }]} />
-          </View>
-        </View>
-
         {/* Title */}
         <Text style={styles.title}>Registration Details</Text>
         <Text style={styles.subtitle}>

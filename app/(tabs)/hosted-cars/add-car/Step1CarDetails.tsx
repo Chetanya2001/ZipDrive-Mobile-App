@@ -149,14 +149,6 @@ const Step1CarDetails: React.FC<Step1CarDetailsProps> = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Progress */}
-        <View style={styles.progressSection}>
-          <Text style={styles.progressText}>Step 1 of 6: Car Details</Text>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: "16.66%" }]} />
-          </View>
-        </View>
-
         {/* Title */}
         <Text style={styles.title}>Tell us about your car</Text>
         <Text style={styles.subtitle}>
