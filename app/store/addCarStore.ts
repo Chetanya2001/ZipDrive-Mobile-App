@@ -10,6 +10,8 @@ type CarState = {
   uploadRC: (data: any) => Promise<any>;
   addInsurance: (data: any) => Promise<any>;
   addCarFeatures: (data: any) => Promise<any>;
+  addImage: (data: any) => Promise<any>;
+  uploadAvailability: (data: any) => Promise<any>;
 };
 
 export const useAddCarStore = create<CarState>((set) => ({
@@ -171,6 +173,96 @@ export const useAddCarStore = create<CarState>((set) => ({
     } catch (error: any) {
       console.error(
         "Failed to add car features:",
+        error.response?.data || error.message
+      );
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+  //──────────────────────────────────────────────────────────────
+  // ADD IMAGES (EXPO SAFE)
+  //──────────────────────────────────────────────────────────────
+  addImage: async (data: any) => {
+    const token = useAuthStore.getState().token;
+
+    if (!token) {
+      throw new Error("Authentication token not found");
+    }
+
+    const formData = new FormData();
+
+    // Append car_id
+    formData.append("car_id", String(data.car_id));
+
+    // Append multiple images
+    if (data.images && data.images.length > 0) {
+      data.images.forEach((image: any, index: number) => {
+        formData.append("images", {
+          uri: image.uri,
+          name: `car_image_${index + 1}_${Date.now()}.jpg`,
+          type: image.mimeType || image.type || "image/jpeg",
+        } as any);
+      });
+    }
+
+    set({ loading: true });
+
+    try {
+      console.log("📤 Uploading Car Images...");
+
+      const res = await axios.post(
+        `${API_CONFIG.BASE_URL}/cars/addImage`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+          transformRequest: (data) => data,
+        }
+      );
+
+      console.log("✅ Images Uploaded:", res.data);
+      return res.data;
+    } catch (error: any) {
+      console.error(
+        "❌ Image Upload Error:",
+        error.response?.data || error.message
+      );
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+  uploadAvailability: async (data: any) => {
+    const token = useAuthStore.getState().token;
+
+    if (!token) {
+      throw new Error("Authentication token not found");
+    }
+
+    set({ loading: true });
+
+    try {
+      console.log("Sending Availability Data:", data);
+
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}/cars/more-details`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("✅ Availability Updated:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        "❌ Availability Upload Error:",
         error.response?.data || error.message
       );
       throw error;
