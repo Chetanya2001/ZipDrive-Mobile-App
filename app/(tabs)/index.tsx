@@ -1,4 +1,4 @@
-// ZipDrivePremiumScreen.tsx
+// ZipDrivePremiumScreen.tsx - Data Sync Only
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { memo, useEffect, useRef } from "react";
@@ -6,17 +6,17 @@ import {
   Animated,
   Dimensions,
   Image,
+  Platform,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
-  Platform, // ⭐ Added Platform to check OS
 } from "react-native";
 
-import { hs, vs, ms } from "../../utils/responsive";
+import { hs, ms, vs } from "../../utils/responsive";
+import { useCarStore } from "../store/carStore"; // ⭐ ADDED: Car Store
 
 const { width, height } = Dimensions.get("window");
 
@@ -80,6 +80,14 @@ const ZipDrivePremiumScreen: React.FC = () => {
   const heroImageAnim = useRef(new Animated.Value(1)).current;
   const indexRef = useRef(0);
 
+  // ⭐ ADDED: Car Store - Data Only
+  const { cars, loading: carsLoading, getCars } = useCarStore();
+
+  // ⭐ ADDED: Fetch cars on mount
+  useEffect(() => {
+    getCars();
+  }, [getCars]);
+
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -112,22 +120,62 @@ const ZipDrivePremiumScreen: React.FC = () => {
 
   const activeImage = CAR_IMAGES[indexRef.current];
 
-  // ⭐ FIX: Calculate top padding for Android devices to avoid the notch/status bar
   const androidTopPadding = Platform.select({
     android: StatusBar.currentHeight,
     default: 0,
   });
 
+  // ⭐ UPDATED: Use real car data in showcase
+  const renderCarCards = () => {
+    if (carsLoading) {
+      return CAR_IMAGES.map((uri, i) => (
+        <BlurView
+          key={`loading-${i}`}
+          intensity={70}
+          tint="dark"
+          style={styles.carCard}
+        >
+          <Image source={{ uri }} style={styles.carThumb} resizeMode="cover" />
+          <View style={styles.carMeta}>
+            <Text style={styles.carTitle}>Loading...</Text>
+            <Text style={styles.carPrice}>Fetching cars</Text>
+          </View>
+        </BlurView>
+      ));
+    }
+
+    return cars.slice(0, 5).map((car: any) => {
+      const firstPhoto = car.photos?.[0] || car.image || CAR_IMAGES[0];
+      const displayName = car.name || car.make || `Car ${car.id}`;
+      const displayPrice = car.price_per_hour
+        ? `₹${car.price_per_hour}/hr`
+        : `₹${car.price}/hr`;
+
+      return (
+        <BlurView
+          key={car.id}
+          intensity={70}
+          tint="dark"
+          style={styles.carCard}
+        >
+          <Image
+            source={{ uri: firstPhoto }}
+            style={styles.carThumb}
+            resizeMode="cover"
+          />
+          <View style={styles.carMeta}>
+            <Text style={styles.carTitle} numberOfLines={1}>
+              {displayName}
+            </Text>
+            <Text style={styles.carPrice}>{displayPrice}</Text>
+          </View>
+        </BlurView>
+      );
+    });
+  };
+
   return (
-    <SafeAreaView
-      style={[
-        styles.safe,
-        // ⭐ Apply the calculated padding only to the top, ensuring notch safety
-        { paddingTop: androidTopPadding },
-      ]}
-    >
-      {/* ⭐ FIX: Set StatusBar to translucent so content draws under it. 
-             The paddingTop then correctly offsets the content. */}
+    <SafeAreaView style={[styles.safe, { paddingTop: androidTopPadding }]}>
       <StatusBar
         barStyle="light-content"
         translucent={true}
@@ -161,14 +209,10 @@ const ZipDrivePremiumScreen: React.FC = () => {
               <View>
                 <Text style={styles.heroCardTitle}>Drive Luxury Today</Text>
                 <Text style={styles.heroCardSubtitle}>
-                  Premium cars, flexible plans
+                  {carsLoading
+                    ? "Loading premium cars..."
+                    : `${cars.length} premium cars available`}
                 </Text>
-              </View>
-
-              <View style={styles.heroCardActions}>
-                <TouchableOpacity>
-                  <Text style={styles.ghostText}>Browse</Text>
-                </TouchableOpacity>
               </View>
             </BlurView>
           </Animated.View>
@@ -184,29 +228,12 @@ const ZipDrivePremiumScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ---- SHOWCASE ---- */}
+        {/* ---- SHOWCASE ---- ⭐ DATA SYNCED */}
         <View style={styles.showcaseSection}>
           <Text style={styles.sectionTitle}>Handpicked for you</Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {CAR_IMAGES.map((uri, i) => (
-              <BlurView
-                key={uri}
-                intensity={70}
-                tint="dark"
-                style={styles.carCard}
-              >
-                <Image
-                  source={{ uri }}
-                  style={styles.carThumb}
-                  resizeMode="cover"
-                />
-                <View style={styles.carMeta}>
-                  <Text style={styles.carTitle}>Model {i + 1}</Text>
-                  <Text style={styles.carPrice}>₹4,999 / day</Text>
-                </View>
-              </BlurView>
-            ))}
+            {renderCarCards()}
           </ScrollView>
         </View>
 
@@ -223,14 +250,12 @@ const ZipDrivePremiumScreen: React.FC = () => {
 
 export default ZipDrivePremiumScreen;
 
-/* ---------------------- Styles (responsive) ---------------------- */
+/* ---------------------- Styles (unchanged) ---------------------- */
 const THEME_BG = "#0a1220";
 const BUTTON = "#01d28e";
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: THEME_BG },
-
-  /* TOP BAR - removed unused styles for brevity */
 
   /* HERO */
   heroWrap: { marginTop: vs(18), paddingHorizontal: hs(18) },
