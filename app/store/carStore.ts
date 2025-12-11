@@ -1,6 +1,7 @@
 import axios from "axios";
 import { create } from "zustand";
 import { API_CONFIG } from "../../config/api";
+import { useAuthStore } from "./authStore"; // ⬅️ import auth store
 
 export interface Car {
   id: number;
@@ -34,6 +35,7 @@ export interface Car {
     trip_end_balance: string | null;
   };
 }
+
 export interface CarFeatures {
   length: number;
   slice(arg0: number, arg1: number): unknown;
@@ -91,9 +93,10 @@ export const useCarStore = create<CarState>((set) => ({
   loading: false,
   error: null,
 
-  // 🔵 GET ALL CARS
+  // GET ALL CARS
   getCars: async () => {
     set({ loading: true, error: null });
+
     try {
       const response = await axios.get<Car[]>(`${API_CONFIG.BASE_URL}/cars`);
       console.log("🚗 Cars API Response:", response.data);
@@ -113,12 +116,13 @@ export const useCarStore = create<CarState>((set) => ({
     }
   },
 
-  // 🔵 GET CAR DETAILS BY ID
+  // GET CAR DETAILS BY ID
   getCarDetails: async (car_id: number) => {
     set({ loading: true, error: null });
 
     try {
-      const token = localStorage.getItem("token");
+      // ⬅️ token taken from Auth Store (NOT localStorage)
+      const token = useAuthStore.getState().token;
 
       const response = await axios.post(
         `${API_CONFIG.BASE_URL}/car-details/getCarDetails`,
