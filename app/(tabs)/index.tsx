@@ -1,4 +1,5 @@
-// ZipDrivePremiumScreen.tsx - Data Sync Only
+// ZipDrivePremiumScreen.tsx - Fully Dynamic (No Hardcoded Data)
+import { useNavigation } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { memo, useEffect, useRef } from "react";
@@ -12,11 +13,11 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
-
 import { hs, ms, vs } from "../../utils/responsive";
-import { useCarStore } from "../store/carStore"; // ⭐ ADDED: Car Store
+import { useCarStore } from "../store/carStore";
 
 const { width, height } = Dimensions.get("window");
 
@@ -32,13 +33,7 @@ interface FeatureCardProps {
   feature: Feature;
 }
 
-/* ---------------------- Data ---------------------- */
-const CAR_IMAGES = [
-  "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1170&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=1170&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1542362567-b07e54358753?q=80&w=1170&auto=format&fit=crop",
-];
-
+/* ---------------------- Features (Static - OK to keep) ---------------------- */
 const FEATURES: Feature[] = [
   {
     id: "f1",
@@ -76,18 +71,20 @@ FeatureCard.displayName = "FeatureCard";
 
 /* ---------------------- Screen ---------------------- */
 const ZipDrivePremiumScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+
   const heroScale = useRef(new Animated.Value(1)).current;
   const heroImageAnim = useRef(new Animated.Value(1)).current;
-  const indexRef = useRef(0);
 
-  // ⭐ ADDED: Car Store - Data Only
+  // Car Store
   const { cars, loading: carsLoading, getCars } = useCarStore();
 
-  // ⭐ ADDED: Fetch cars on mount
+  // Fetch cars on mount
   useEffect(() => {
     getCars();
   }, [getCars]);
 
+  // Hero breathing animation
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -103,73 +100,76 @@ const ZipDrivePremiumScreen: React.FC = () => {
         }),
       ])
     ).start();
-
-    const interval = setInterval(() => {
-      indexRef.current = (indexRef.current + 1) % CAR_IMAGES.length;
-      heroImageAnim.setValue(0);
-
-      Animated.timing(heroImageAnim, {
-        toValue: 1,
-        duration: 700,
-        useNativeDriver: true,
-      }).start();
-    }, 6000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const activeImage = CAR_IMAGES[indexRef.current];
+  }, [heroScale]);
 
   const androidTopPadding = Platform.select({
     android: StatusBar.currentHeight,
     default: 0,
   });
 
-  // ⭐ UPDATED: Use real car data in showcase
+  // Get hero image from first available car
+  const heroImageUri =
+    cars.length > 0 ? cars[0].photos?.[0] || cars[0].image || null : null;
+
+  // Render car cards (fully dynamic)
   const renderCarCards = () => {
-    if (carsLoading) {
-      return CAR_IMAGES.map((uri, i) => (
-        <BlurView
-          key={`loading-${i}`}
-          intensity={70}
-          tint="dark"
-          style={styles.carCard}
-        >
-          <Image source={{ uri }} style={styles.carThumb} resizeMode="cover" />
-          <View style={styles.carMeta}>
-            <Text style={styles.carTitle}>Loading...</Text>
-            <Text style={styles.carPrice}>Fetching cars</Text>
-          </View>
-        </BlurView>
-      ));
+    if (carsLoading || cars.length === 0) {
+      return Array(5)
+        .fill(null)
+        .map((_, i) => (
+          <BlurView
+            key={`skeleton-${i}`}
+            intensity={70}
+            tint="dark"
+            style={styles.carCard}
+          >
+            <View style={styles.skeletonThumb} />
+            <View style={styles.carMeta}>
+              <View style={styles.skeletonText} />
+              <View style={[styles.skeletonText, { width: "60%" }]} />
+            </View>
+          </BlurView>
+        ));
     }
 
-    return cars.slice(0, 5).map((car: any) => {
-      const firstPhoto = car.photos?.[0] || car.image || CAR_IMAGES[0];
-      const displayName = car.name || car.make || `Car ${car.id}`;
+    return cars.slice(0, 8).map((car: any) => {
+      const firstPhoto = car.photos?.[0]?.photo_url || car.image;
+      const displayName =
+        car.name || `${car.make} ${car.model}` || "Premium Car";
       const displayPrice = car.price_per_hour
         ? `₹${car.price_per_hour}/hr`
-        : `₹${car.price}/hr`;
+        : car.price
+        ? `₹${car.price}/day`
+        : "Contact for price";
 
       return (
-        <BlurView
+        <TouchableOpacity
           key={car.id}
-          intensity={70}
-          tint="dark"
-          style={styles.carCard}
+          activeOpacity={0.8}
+          onPress={() =>
+            navigation.navigate("screens/car-details", { id: car.id })
+          }
         >
-          <Image
-            source={{ uri: firstPhoto }}
-            style={styles.carThumb}
-            resizeMode="cover"
-          />
-          <View style={styles.carMeta}>
-            <Text style={styles.carTitle} numberOfLines={1}>
-              {displayName}
-            </Text>
-            <Text style={styles.carPrice}>{displayPrice}</Text>
-          </View>
-        </BlurView>
+          <BlurView intensity={70} tint="dark" style={styles.carCard}>
+            {firstPhoto ? (
+              <Image
+                source={{ uri: firstPhoto }}
+                style={styles.carThumb}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.noImageThumb}>
+                <Text style={styles.noImageText}>🚗</Text>
+              </View>
+            )}
+            <View style={styles.carMeta}>
+              <Text style={styles.carTitle} numberOfLines={1}>
+                {displayName}
+              </Text>
+              <Text style={styles.carPrice}>{displayPrice}</Text>
+            </View>
+          </BlurView>
+        </TouchableOpacity>
       );
     });
   };
@@ -194,11 +194,17 @@ const ZipDrivePremiumScreen: React.FC = () => {
               { transform: [{ scale: heroScale }] },
             ]}
           >
-            <Animated.Image
-              source={{ uri: activeImage }}
-              style={[styles.heroImage, { opacity: heroImageAnim }]}
-              resizeMode="cover"
-            />
+            {heroImageUri ? (
+              <Animated.Image
+                source={{ uri: heroImageUri }}
+                style={[styles.heroImage, { opacity: heroImageAnim }]}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.heroPlaceholder}>
+                <Text style={styles.heroPlaceholderText}>🚗</Text>
+              </View>
+            )}
 
             <LinearGradient
               colors={["transparent", "rgba(0,0,0,0.65)"]}
@@ -210,8 +216,10 @@ const ZipDrivePremiumScreen: React.FC = () => {
                 <Text style={styles.heroCardTitle}>Drive Luxury Today</Text>
                 <Text style={styles.heroCardSubtitle}>
                   {carsLoading
-                    ? "Loading premium cars..."
-                    : `${cars.length} premium cars available`}
+                    ? "Discovering premium cars..."
+                    : cars.length > 0
+                    ? `${cars.length} premium cars available`
+                    : "No cars available"}
                 </Text>
               </View>
             </BlurView>
@@ -228,9 +236,11 @@ const ZipDrivePremiumScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ---- SHOWCASE ---- ⭐ DATA SYNCED */}
+        {/* ---- SHOWCASE ---- */}
         <View style={styles.showcaseSection}>
-          <Text style={styles.sectionTitle}>Handpicked for you</Text>
+          <Text style={styles.sectionTitle}>
+            {carsLoading ? "Loading..." : "Handpicked for you"}
+          </Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {renderCarCards()}
@@ -250,7 +260,7 @@ const ZipDrivePremiumScreen: React.FC = () => {
 
 export default ZipDrivePremiumScreen;
 
-/* ---------------------- Styles (unchanged) ---------------------- */
+/* ---------------------- Styles ---------------------- */
 const THEME_BG = "#0a1220";
 const BUTTON = "#01d28e";
 
@@ -270,8 +280,17 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  heroPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#1a2332",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  heroPlaceholderText: {
+    fontSize: ms(80),
+    opacity: 0.3,
+  },
   heroGradient: { ...StyleSheet.absoluteFillObject },
-
   heroCard: {
     position: "absolute",
     bottom: vs(16),
@@ -279,8 +298,6 @@ const styles = StyleSheet.create({
     right: hs(16),
     borderRadius: hs(16),
     padding: hs(16),
-    flexDirection: "row",
-    justifyContent: "space-between",
   },
   heroCardTitle: { color: "#fff", fontSize: ms(20), fontWeight: "800" },
   heroCardSubtitle: {
@@ -288,9 +305,6 @@ const styles = StyleSheet.create({
     marginTop: vs(4),
     fontSize: ms(12),
   },
-
-  heroCardActions: { flexDirection: "row", alignItems: "center" },
-  ghostText: { color: "#fff", marginRight: hs(12), fontSize: ms(14) },
 
   /* FEATURES */
   featuresSection: { marginTop: vs(25), paddingHorizontal: hs(18) },
@@ -337,9 +351,30 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.05)",
   },
   carThumb: { width: "100%", height: vs(120) },
+  noImageThumb: {
+    width: "100%",
+    height: vs(120),
+    backgroundColor: "#1a2332",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noImageText: { fontSize: ms(40) },
   carMeta: { padding: hs(10) },
   carTitle: { color: "#fff", fontSize: ms(14), fontWeight: "700" },
   carPrice: { color: "#cafff3", fontSize: ms(12), marginTop: vs(4) },
+
+  // Skeleton
+  skeletonThumb: {
+    width: "100%",
+    height: vs(120),
+    backgroundColor: "#1a2332",
+  },
+  skeletonText: {
+    height: vs(12),
+    backgroundColor: "#1a2332",
+    borderRadius: hs(4),
+    marginTop: vs(6),
+  },
 
   /* CTA */
   ctaWrap: { marginTop: vs(30), paddingHorizontal: hs(18) },

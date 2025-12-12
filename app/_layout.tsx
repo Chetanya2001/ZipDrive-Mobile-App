@@ -6,10 +6,11 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import * as Font from "expo-font";
-import { Slot } from "expo-router";
+import { Stack } from "expo-router"; // ← Add this import
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Providers } from "./providers";
 
 export const unstable_settings = {
   initialRouteName: "splash",
@@ -27,11 +28,24 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Slot />
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <Providers>
+      <SafeAreaProvider>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <Stack screenOptions={{ headerShown: false }}>
+            {/* This loads your tab navigator */}
+            <Stack.Screen name="(tabs)" />
+
+            {/* Full-screen routes outside tabs */}
+            <Stack.Screen name="screens/car-details" />
+
+            {/* Add more screens here later, e.g. booking flow, auth modals, etc. */}
+          </Stack>
+
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </Providers>
   );
 }

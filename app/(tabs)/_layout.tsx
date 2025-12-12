@@ -4,11 +4,11 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "../store/authStore";
-
 import HostedCarsLayout from "./hosted-cars/_layout";
 import HomeScreen from "./index";
 import MyBookingsScreen from "./my-bookings";
 import ProfileScreen from "./profile";
+import CarDetailsScreen from "../screens/car-details";
 const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
