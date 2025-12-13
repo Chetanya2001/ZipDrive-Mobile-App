@@ -3,12 +3,12 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ZipYourTrip from "../screens/zip-your-trip";
 import { useAuthStore } from "../store/authStore";
 import HostedCarsLayout from "./hosted-cars/_layout";
 import HomeScreen from "./index";
 import MyBookingsScreen from "./my-bookings";
 import ProfileScreen from "./profile";
-import CarDetailsScreen from "../screens/car-details";
 const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
@@ -49,6 +49,16 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={28} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="ZipYourTrip"
+        component={ZipYourTrip}
+        options={{
+          title: "Search",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="search" size={26} color={color} />
           ),
         }}
       />
